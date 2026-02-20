@@ -6,6 +6,10 @@ import { getToken, onMessage } from "firebase/messaging";
 import Login from "./pages/Login";
 import Pedidos from "./pages/Pedidos";
 import Ventas from "./pages/Ventas";
+import Productos from "./pages/Productos";
+import Salsas from "./pages/Salsas";
+import Horario from "./pages/Horario";
+import Mensaje from "./pages/Mensaje";
 
 function App() {
 
@@ -13,7 +17,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState("pedidos");
 
-  // 🔐 detectar login
+  // 🔐 login
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -22,35 +26,30 @@ function App() {
     return () => unsub();
   }, []);
 
-  // 🔔 ACTIVAR NOTIFICACIONES PUSH
+  // 🔔 notificaciones
   useEffect(() => {
 
     const activar = async () => {
-
       try {
         const permission = await Notification.requestPermission();
 
         if (permission === "granted") {
-
           const token = await getToken(messaging, {
             vapidKey: "BAPH2hIg5RaM0zlcZGWPF-gwjw5_t1X8XfSuv-alz4e76N4cPV-uyC-Nkp53v_Xi9GyfNPUAm0Lxp8s03qTloao"
           });
 
-          console.log("🔥 TOKEN CELULAR ADMIN:");
+          console.log("🔥 TOKEN ADMIN:");
           console.log(token);
         }
 
       } catch (err) {
-        console.log("Error notific:", err);
+        console.log(err);
       }
     };
 
     activar();
 
-    // 🔊 cuando llega notificación con app abierta
-    onMessage(messaging, (payload) => {
-      console.log("Notificación recibida:", payload);
-
+    onMessage(messaging, () => {
       const audio = new Audio("/ding.mp3");
       audio.play().catch(()=>{});
     });
@@ -58,78 +57,96 @@ function App() {
   }, []);
 
   if (loading) return null;
-
-  // 🔒 si no está logueado
   if (!user) return <Login />;
+
+  const Btn = ({id,icon,label}) => (
+    <button
+      onClick={()=>setVista(id)}
+      style={{
+        background: vista===id ? "#16a34a" : "#18181b",
+        border:"none",
+        color:"white",
+        padding:"14px",
+        borderRadius:14,
+        cursor:"pointer",
+        fontWeight:"bold",
+        fontSize:15,
+        display:"flex",
+        alignItems:"center",
+        gap:10,
+        transition:"0.2s",
+        boxShadow: vista===id ? "0 0 15px #16a34a" : "none"
+      }}
+    >
+      {icon} {label}
+    </button>
+  );
 
   return (
     <div style={{
-      minHeight: "100vh",
-      background: "#0f0f0f",
-      fontFamily: "Arial",
-      color: "white"
+      minHeight:"100vh",
+      background:"#0a0a0a",
+      color:"white",
+      display:"flex",
+      fontFamily:"Arial"
     }}>
 
-      {/* HEADER */}
+      {/* SIDEBAR */}
       <div style={{
-        background:"#111",
+        width:220,
+        background:"#050505",
         padding:20,
+        borderRight:"1px solid #111",
         display:"flex",
-        gap:15,
-        alignItems:"center",
-        borderBottom:"1px solid #222"
+        flexDirection:"column",
+        gap:12
       }}>
 
-        <button
-          onClick={()=>setVista("pedidos")}
-          style={{
-            background: vista==="pedidos" ? "red" : "#222",
-            color:"white",
-            border:"none",
-            padding:"10px 18px",
-            borderRadius:10,
-            cursor:"pointer",
-            fontWeight:"bold"
-          }}
-        >
-          🔥 Pedidos
-        </button>
+        <h2 style={{marginBottom:10}}>
+          🍗 Admin Panel
+        </h2>
 
-        <button
-          onClick={()=>setVista("ventas")}
-          style={{
-            background: vista==="ventas" ? "limegreen" : "#222",
-            color:"white",
-            border:"none",
-            padding:"10px 18px",
-            borderRadius:10,
-            cursor:"pointer",
-            fontWeight:"bold"
-          }}
-        >
-          📊 Ventas
-        </button>
+        <Btn id="pedidos" icon="🔥" label="Pedidos"/>
+        <Btn id="ventas" icon="📊" label="Ventas"/>
+        <Btn id="productos" icon="🍔" label="Productos"/>
+        <Btn id="salsas" icon="🌶️" label="Salsas"/>
+        <Btn id="horario" icon="⏰" label="Horario"/>
+        <Btn id="mensaje" icon="💬" label="Mensaje tienda"/>
 
-        <div style={{marginLeft:"auto"}}>
+        <div style={{marginTop:"auto"}}>
           <button
             onClick={()=>signOut(auth)}
             style={{
-              background:"#333",
-              color:"white",
+              width:"100%",
+              background:"#dc2626",
               border:"none",
-              padding:"8px 15px",
-              borderRadius:8,
+              padding:12,
+              borderRadius:12,
+              color:"white",
+              fontWeight:"bold",
               cursor:"pointer"
             }}
           >
             Cerrar sesión
           </button>
         </div>
-
       </div>
 
-      {vista === "pedidos" && <Pedidos />}
-      {vista === "ventas" && <Ventas />}
+      {/* CONTENIDO */}
+      <div style={{
+        flex:1,
+        padding:25,
+        overflowY:"auto"
+      }}>
+
+        {vista==="pedidos" && <Pedidos/>}
+        {vista==="ventas" && <Ventas/>}
+        {vista==="productos" && <Productos/>}
+        {vista==="salsas" && <Salsas/>}
+        {vista==="horario" && <Horario/>}
+        {vista==="mensaje" && <Mensaje/>}
+
+      </div>
 
     </div>
   );
