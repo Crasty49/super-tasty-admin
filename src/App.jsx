@@ -13,7 +13,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState("pedidos");
 
-  // 🔐 detectar login
+  // 🔐 Detectar sesión
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -22,44 +22,45 @@ function App() {
     return () => unsub();
   }, []);
 
-  // 🔔 ACTIVAR NOTIFICACIONES PUSH
+  // 🔔 Notificaciones push
   useEffect(() => {
 
-    const activar = async () => {
+    if (!user) return;
 
+    const activarNotificaciones = async () => {
       try {
         const permission = await Notification.requestPermission();
 
         if (permission === "granted") {
 
           const token = await getToken(messaging, {
-            vapidKey: "BAPH2hIg5RaM0zlcZGWPF-gwjw5_t1X8XfSuv-alz4e76N4cPV-uyC-Nkp53v_Xi9GyfNPUAm0Lxp8s03qTloao"
+            vapidKey: "TU_VAPID_KEY_AQUI"
           });
 
-          console.log("🔥 TOKEN CELULAR ADMIN:");
+          console.log("🔥 TOKEN ADMIN:");
           console.log(token);
         }
 
-      } catch (err) {
-        console.log("Error notific:", err);
+      } catch (error) {
+        console.log("Error notific:", error);
       }
     };
 
-    activar();
+    activarNotificaciones();
 
-    // 🔊 cuando llega notificación con app abierta
-    onMessage(messaging, (payload) => {
+    const unsubscribe = onMessage(messaging, (payload) => {
       console.log("Notificación recibida:", payload);
 
       const audio = new Audio("/ding.mp3");
       audio.play().catch(()=>{});
     });
 
-  }, []);
+    return () => unsubscribe();
+
+  }, [user]);
 
   if (loading) return null;
 
-  // 🔒 si no está logueado
   if (!user) return <Login />;
 
   return (
@@ -83,13 +84,14 @@ function App() {
         <button
           onClick={()=>setVista("pedidos")}
           style={{
-            background: vista==="pedidos" ? "red" : "#222",
+            background: vista==="pedidos" ? "#dc2626" : "#222",
             color:"white",
             border:"none",
             padding:"10px 18px",
-            borderRadius:10,
+            borderRadius:12,
             cursor:"pointer",
-            fontWeight:"bold"
+            fontWeight:"bold",
+            transition:"0.2s"
           }}
         >
           🔥 Pedidos
@@ -98,13 +100,14 @@ function App() {
         <button
           onClick={()=>setVista("ventas")}
           style={{
-            background: vista==="ventas" ? "limegreen" : "#222",
+            background: vista==="ventas" ? "#22c55e" : "#222",
             color:"white",
             border:"none",
             padding:"10px 18px",
-            borderRadius:10,
+            borderRadius:12,
             cursor:"pointer",
-            fontWeight:"bold"
+            fontWeight:"bold",
+            transition:"0.2s"
           }}
         >
           📊 Ventas
@@ -118,7 +121,7 @@ function App() {
               color:"white",
               border:"none",
               padding:"8px 15px",
-              borderRadius:8,
+              borderRadius:10,
               cursor:"pointer"
             }}
           >
@@ -128,6 +131,7 @@ function App() {
 
       </div>
 
+      {/* CONTENIDO */}
       {vista === "pedidos" && <Pedidos />}
       {vista === "ventas" && <Ventas />}
 
