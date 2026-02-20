@@ -118,7 +118,11 @@ function App() {
       </div>
 
       {/* CONTENIDO */}
-      <div style={{padding:15}}>
+      <div style={{
+        padding:15,
+        minHeight:"calc(100vh - 70px)",
+        background:"#0b0b0b"
+      }}>
         {vista==="pedidos" && <Pedidos/>}
         {vista==="ventas" && <Ventas/>}
         {vista==="productos" && <Productos/>}

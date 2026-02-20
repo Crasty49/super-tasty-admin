@@ -118,7 +118,11 @@ const marcarListo = async (pedido) => {
 
   return (
 
-    <div style={{ padding: 30 }}>
+    <div style={{
+  padding:20,
+  minHeight:"100%",
+  boxSizing:"border-box"
+}}>
 
       <h2>
         Pedidos activos 🔥 ({pedidos.length})

@@ -34,7 +34,11 @@ function Productos() {
   ];
 
   return (
-    <div style={{ padding: 30 }}>
+    <div style={{
+  padding:20,
+  minHeight:"100%",
+  boxSizing:"border-box"
+}}>
       <h2>Disponibilidad de productos</h2>
 
       {ORDEN.map((prod) => (

@@ -34,7 +34,11 @@ function Salsas() {
   };
 
   return (
-    <div style={{ padding: 30 }}>
+    <div style={{
+  padding:20,
+  minHeight:"100%",
+  boxSizing:"border-box"
+}}>
       <h2>Disponibilidad de salsas</h2>
 
       {ORDEN_SALSAS.map((salsa) => (
