@@ -107,7 +107,7 @@ function App() {
             fontWeight:"bold"
           }}
         >
-          📊 Ventasxd
+          📊 Ventas
         </button>
 
         <div style={{marginLeft:"auto"}}>
