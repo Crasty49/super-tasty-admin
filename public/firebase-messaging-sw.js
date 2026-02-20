@@ -12,9 +12,18 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage(function(payload) {
-  self.registration.showNotification("🔥 Nuevo pedido", {
-    body: "Tienes un nuevo pedido",
-    icon: "/logo192.png"
-  });
+// 👇 ESTE BLOQUE ES CLAVE
+self.addEventListener("push", function(event) {
+  const data = event.data?.json() || {};
+
+  const title = data.notification?.title || "🔥 Nuevo pedido";
+  const options = {
+    body: data.notification?.body || "Tienes un nuevo pedido",
+    icon: "/logo192.png",
+    badge: "/logo192.png"
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
