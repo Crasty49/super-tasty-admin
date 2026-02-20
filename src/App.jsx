@@ -122,7 +122,7 @@ function App() {
               cursor:"pointer"
             }}
           >
-            Cerrar sesión
+            Cerrar sesión xd
           </button>
         </div>
 
