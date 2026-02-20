@@ -16,8 +16,9 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState("pedidos");
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  // 🔐 login
+  // 🔐 LOGIN
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -26,25 +27,18 @@ function App() {
     return () => unsub();
   }, []);
 
-  // 🔔 notificaciones
+  // 🔔 NOTIFICACIONES
   useEffect(() => {
-
     const activar = async () => {
       try {
         const permission = await Notification.requestPermission();
-
         if (permission === "granted") {
           const token = await getToken(messaging, {
-            vapidKey: "BAPH2hIg5RaM0zlcZGWPF-gwjw5_t1X8XfSuv-alz4e76N4cPV-uyC-Nkp53v_Xi9GyfNPUAm0Lxp8s03qTloao"
+            vapidKey: "TU_VAPID"
           });
-
-          console.log("🔥 TOKEN ADMIN:");
-          console.log(token);
+          console.log("TOKEN:", token);
         }
-
-      } catch (err) {
-        console.log(err);
-      }
+      } catch {}
     };
 
     activar();
@@ -59,92 +53,123 @@ function App() {
   if (loading) return null;
   if (!user) return <Login />;
 
-  const Btn = ({id,icon,label}) => (
-    <button
-      onClick={()=>setVista(id)}
+  const Item = ({id,icon,text}) => (
+    <div
+      onClick={()=>{
+        setVista(id);
+        setMenuOpen(false);
+      }}
       style={{
-        background: vista===id ? "#16a34a" : "#18181b",
-        border:"none",
-        color:"white",
-        padding:"14px",
-        borderRadius:14,
+        padding:"16px",
+        borderBottom:"1px solid #222",
         cursor:"pointer",
-        fontWeight:"bold",
-        fontSize:15,
-        display:"flex",
-        alignItems:"center",
-        gap:10,
-        transition:"0.2s",
-        boxShadow: vista===id ? "0 0 15px #16a34a" : "none"
+        background: vista===id ? "#16a34a" : "transparent",
+        fontWeight:"bold"
       }}
     >
-      {icon} {label}
-    </button>
+      {icon} {text}
+    </div>
   );
 
   return (
-    <div style={{
-      minHeight:"100vh",
-      background:"#0a0a0a",
-      color:"white",
-      display:"flex",
-      fontFamily:"Arial"
-    }}>
+    <div style={{background:"#0b0b0b",minHeight:"100vh",color:"white"}}>
 
-      {/* SIDEBAR */}
+      {/* HEADER */}
       <div style={{
-        width:220,
+        padding:15,
         background:"#050505",
-        padding:20,
-        borderRight:"1px solid #111",
         display:"flex",
-        flexDirection:"column",
-        gap:12
+        alignItems:"center",
+        gap:15,
+        borderBottom:"1px solid #111"
       }}>
 
-        <h2 style={{marginBottom:10}}>
-          🍗 Admin Panel
-        </h2>
+        {/* BOTON MENU */}
+        <div
+          onClick={()=>setMenuOpen(true)}
+          style={{
+            fontSize:26,
+            cursor:"pointer"
+          }}
+        >
+          ☰
+        </div>
 
-        <Btn id="pedidos" icon="🔥" label="Pedidos"/>
-        <Btn id="ventas" icon="📊" label="Ventas"/>
-        <Btn id="productos" icon="🍔" label="Productos"/>
-        <Btn id="salsas" icon="🌶️" label="Salsas"/>
-        <Btn id="horario" icon="⏰" label="Horario"/>
-        <Btn id="mensaje" icon="💬" label="Mensaje tienda"/>
+        <div style={{fontWeight:"bold",fontSize:18}}>
+          🍗 Super Tasty Admin
+        </div>
 
-        <div style={{marginTop:"auto"}}>
+        <div style={{marginLeft:"auto"}}>
           <button
             onClick={()=>signOut(auth)}
             style={{
-              width:"100%",
               background:"#dc2626",
               border:"none",
-              padding:12,
-              borderRadius:12,
+              padding:"8px 14px",
+              borderRadius:10,
               color:"white",
-              fontWeight:"bold",
-              cursor:"pointer"
+              fontWeight:"bold"
             }}
           >
-            Cerrar sesión
+            Salir
           </button>
         </div>
+
       </div>
 
       {/* CONTENIDO */}
-      <div style={{
-        flex:1,
-        padding:25,
-        overflowY:"auto"
-      }}>
-
+      <div style={{padding:15}}>
         {vista==="pedidos" && <Pedidos/>}
         {vista==="ventas" && <Ventas/>}
         {vista==="productos" && <Productos/>}
         {vista==="salsas" && <Salsas/>}
         {vista==="horario" && <Horario/>}
         {vista==="mensaje" && <Mensaje/>}
+      </div>
+
+      {/* OVERLAY NEGRO */}
+      {menuOpen && (
+        <div
+          onClick={()=>setMenuOpen(false)}
+          style={{
+            position:"fixed",
+            top:0,left:0,
+            width:"100%",
+            height:"100%",
+            background:"rgba(0,0,0,0.6)",
+            zIndex:9
+          }}
+        />
+      )}
+
+      {/* SIDEBAR SLIDE */}
+      <div style={{
+        position:"fixed",
+        top:0,
+        left: menuOpen ? 0 : -270,
+        width:260,
+        height:"100%",
+        background:"#050505",
+        zIndex:10,
+        transition:"0.3s",
+        boxShadow:"0 0 25px black"
+      }}>
+
+        <div style={{
+          padding:20,
+          fontSize:20,
+          fontWeight:"bold",
+          borderBottom:"1px solid #222"
+        }}>
+          ⚙️ Panel admin
+        </div>
+
+        <Item id="pedidos" icon="🔥" text="Pedidos"/>
+        <Item id="ventas" icon="📊" text="Ventas"/>
+        <Item id="productos" icon="🍔" text="Productos"/>
+        <Item id="salsas" icon="🌶️" text="Salsas"/>
+        <Item id="horario" icon="⏰" text="Horario"/>
+        <Item id="mensaje" icon="💬" text="Mensaje tienda"/>
 
       </div>
 
