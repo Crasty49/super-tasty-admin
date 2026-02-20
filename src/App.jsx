@@ -107,7 +107,7 @@ function App() {
             fontWeight:"bold"
           }}
         >
-          📊 Ventas
+          📊 Ventasxd
         </button>
 
         <div style={{marginLeft:"auto"}}>
@@ -122,7 +122,7 @@ function App() {
               cursor:"pointer"
             }}
           >
-            Cerrar sesión xd
+            Cerrar sesión
           </button>
         </div>
 
