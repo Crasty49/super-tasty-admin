@@ -91,7 +91,7 @@ function Ventas() {
   return (
     <div style={{padding:30,color:"white"}}>
 
-      <h1 style={{fontSize:28,color:"red"}}>🚨 VERSION NUEVAA 🚨</h1>
+      <h1 style={{fontSize:28}}>📊 Ventas</h1>
 
       {/* SELECTOR PDF */}
       <div style={{
