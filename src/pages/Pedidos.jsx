@@ -139,44 +139,64 @@ function Pedidos() {
 
     {p.productos.map((prod,i)=>{
       let emoji="🍗";
-      const name = prod.name.toLowerCase();
+      const name = prod.name?.toLowerCase() || "";
 
       if(name.includes("papas")) emoji="🍟";
       if(name.includes("queso")) emoji="🧀";
 
+      const isBoneless = name.includes("boneless");
+
       return (
-        <div key={i} style={{marginBottom:8,opacity:0.95}}>
+        <div key={i} style={{marginBottom:10,opacity:0.95}}>
 
           {/* NOMBRE */}
-          <div>
+          <div style={{fontWeight:"bold"}}>
             {emoji} {prod.name}
             {prod.quantity>1?` x${prod.quantity}`:""}
           </div>
 
-          {/* MODO */}
-          {prod.mode && (
-            <div style={{fontSize:13,opacity:0.7,marginLeft:18}}>
-              🔥 {prod.mode === "banados" ? "Bañados" : "Naturales"}
-            </div>
-          )}
+          {/* SOLO SI ES BONELESS */}
+          {isBoneless && (
+            <>
+              {/* MODO */}
+              {prod.mode && (
+                <div style={{
+                  fontSize:13,
+                  marginLeft:18,
+                  color:"#fb923c",
+                  fontWeight:"bold"
+                }}>
+                  🔥 {prod.mode === "banados"
+                    ? "Bañados"
+                    : prod.mode === "naturales_salsa"
+                    ? "Naturales + salsa aparte"
+                    : "Naturales"}
+                </div>
+              )}
 
-          {/* SALSAS INCLUIDAS */}
-          {prod.includedSauces?.length > 0 && (
-            <div style={{fontSize:13,opacity:0.7,marginLeft:18}}>
-              🥫 Incluidas: {prod.includedSauces.join(", ")}
-            </div>
-          )}
+              {/* INCLUIDAS */}
+              {prod.includedSauces && prod.includedSauces.length > 0 && (
+                <div style={{
+                  fontSize:13,
+                  marginLeft:18,
+                  opacity:0.8
+                }}>
+                  🥫 Incluidas: {prod.includedSauces.join(", ")}
+                </div>
+              )}
 
-          {/* SALSAS EXTRAS */}
-          {prod.extraSauces?.length > 0 && (
-            <div style={{
-              fontSize:13,
-              marginLeft:18,
-              color:"#facc15",
-              fontWeight:"bold"
-            }}>
-              ⭐ Extras: {prod.extraSauces.join(", ")}
-            </div>
+              {/* EXTRAS */}
+              {prod.extraSauces && prod.extraSauces.length > 0 && (
+                <div style={{
+                  fontSize:13,
+                  marginLeft:18,
+                  color:"#facc15",
+                  fontWeight:"bold"
+                }}>
+                  ⭐ Extras: {prod.extraSauces.join(", ")}
+                </div>
+              )}
+            </>
           )}
 
         </div>
