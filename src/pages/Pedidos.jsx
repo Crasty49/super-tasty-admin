@@ -17,17 +17,15 @@ function Pedidos() {
 
   const [pedidos, setPedidos] = useState([]);
   const [pedidosListos, setPedidosListos] = useState([]);
-  const [vista, setVista] = useState("activos"); // activos | listos
+  const [vista, setVista] = useState("activos");
 
   const audioRef = useRef(null);
   const pedidosPreviosRef = useRef(0);
 
-  // 🔊 sonido
   useEffect(() => {
     audioRef.current = new Audio(ding);
   }, []);
 
-  // 🔥 ESCUCHAR PEDIDOS
   useEffect(() => {
 
     const q = query(
@@ -52,7 +50,6 @@ function Pedidos() {
         }
       });
 
-      // 🔊 sonido si llegan nuevos
       if (
         activos.length > pedidosPreviosRef.current &&
         pedidosPreviosRef.current !== 0
@@ -71,7 +68,6 @@ function Pedidos() {
 
   }, []);
 
-  // 🔥 MARCAR LISTO
   const marcarListo = async (pedido) => {
 
     const refPedido = doc(db, "pedidos", pedido.id);
@@ -80,7 +76,6 @@ function Pedidos() {
       estado: "listo"
     });
 
-    // 🔥 GUARDAR EN VENTAS
     const hoy = new Date();
     const fechaId =
       hoy.getFullYear() + "-" +
@@ -108,23 +103,39 @@ function Pedidos() {
     await setDoc(refVenta, data);
   };
 
-  // 🎨 CARD PEDIDO
+  // 🔥 CARD PREMIUM
   const PedidoCard = (p, listo=false) => (
     <div key={p.id}
       style={{
-        background:"#111",
-        color:"white",
-        padding:15,
-        borderRadius:12,
-        marginTop:15
+        background:"rgba(255,255,255,0.04)",
+        backdropFilter:"blur(18px)",
+        border:"1px solid rgba(255,255,255,0.08)",
+        padding:18,
+        borderRadius:18,
+        marginTop:16,
+        boxShadow:"0 10px 30px rgba(0,0,0,0.5)"
       }}
     >
-      <h3>{p.cliente}</h3>
-      <p>Tel: {p.telefono}</p>
-      <p>{p.pago === "efectivo" ? "💵" : "💳"} Pago: {p.pago}</p>
-      <p>💲 Total: ${p.total}</p>
+      <h3 style={{marginBottom:5}}>{p.cliente}</h3>
 
-      <hr style={{margin:"10px 0"}}/>
+      <div style={{opacity:0.8,fontSize:14}}>
+        Tel: {p.telefono}
+      </div>
+
+      <div style={{marginTop:5}}>
+        {p.pago === "efectivo" ? "💵" : "💳"} Pago: {p.pago}
+      </div>
+
+      <div style={{
+        marginTop:5,
+        fontWeight:"bold",
+        fontSize:18,
+        color:"#22c55e"
+      }}>
+        ${p.total}
+      </div>
+
+      <hr style={{margin:"12px 0",opacity:0.15}}/>
 
       {p.productos.map((prod,i)=>{
         let emoji="🍗";
@@ -133,7 +144,7 @@ function Pedidos() {
         if(name.includes("queso")) emoji="🧀";
 
         return (
-          <div key={i}>
+          <div key={i} style={{marginBottom:4,opacity:0.9}}>
             {emoji} {prod.name}
             {prod.quantity>1?` x${prod.quantity}`:""}
           </div>
@@ -144,14 +155,17 @@ function Pedidos() {
         <button
           onClick={()=>marcarListo(p)}
           style={{
-            marginTop:10,
-            background:"limegreen",
+            marginTop:14,
+            width:"100%",
+            background:"linear-gradient(90deg,#22c55e,#16a34a)",
             border:"none",
-            padding:"8px 15px",
+            padding:"12px",
+            borderRadius:14,
             color:"white",
-            borderRadius:8,
+            fontWeight:"bold",
             cursor:"pointer",
-            fontWeight:"bold"
+            fontSize:15,
+            boxShadow:"0 10px 25px rgba(0,0,0,0.5)"
           }}
         >
           Marcar listo
@@ -160,12 +174,13 @@ function Pedidos() {
 
       {listo && (
         <div style={{
-          marginTop:10,
-          background:"#16a34a",
-          padding:8,
-          borderRadius:8,
+          marginTop:12,
+          background:"rgba(34,197,94,0.15)",
+          padding:10,
+          borderRadius:12,
           textAlign:"center",
-          fontWeight:"bold"
+          fontWeight:"bold",
+          border:"1px solid rgba(34,197,94,0.4)"
         }}>
           Pedido entregado ✅
         </div>
@@ -175,26 +190,34 @@ function Pedidos() {
   );
 
   return (
-    <div style={{padding:20,minHeight:"100%",boxSizing:"border-box"}}>
+    <div style={{padding:10}}>
 
-      <h2>Pedidos 🔥</h2>
+      <h2 style={{
+        fontSize:24,
+        marginBottom:10
+      }}>
+        Pedidos
+      </h2>
 
       {/* BOTONES */}
       <div style={{
         display:"flex",
         gap:10,
-        marginTop:15
+        marginTop:10
       }}>
         <button
           onClick={()=>setVista("activos")}
           style={{
             flex:1,
-            background: vista==="activos" ? "red" : "#222",
-            color:"white",
+            padding:12,
+            borderRadius:14,
             border:"none",
-            padding:"12px",
-            borderRadius:10,
-            fontWeight:"bold"
+            fontWeight:"bold",
+            background:
+              vista==="activos"
+              ? "linear-gradient(90deg,#ff7a18,#ff3d00)"
+              : "#1a1a1a",
+            color:"white"
           }}
         >
           🔥 Activos ({pedidos.length})
@@ -204,37 +227,30 @@ function Pedidos() {
           onClick={()=>setVista("listos")}
           style={{
             flex:1,
-            background: vista==="listos" ? "#16a34a" : "#222",
-            color:"white",
+            padding:12,
+            borderRadius:14,
             border:"none",
-            padding:"12px",
-            borderRadius:10,
-            fontWeight:"bold"
+            fontWeight:"bold",
+            background:
+              vista==="listos"
+              ? "linear-gradient(90deg,#22c55e,#16a34a)"
+              : "#1a1a1a",
+            color:"white"
           }}
         >
           ✅ Listos ({pedidosListos.length})
         </button>
       </div>
 
-      {/* LISTA */}
-      {vista==="activos" &&
-        pedidos.map(p=>PedidoCard(p,false))
-      }
-
-      {vista==="listos" &&
-        pedidosListos.map(p=>PedidoCard(p,true))
-      }
+      {vista==="activos" && pedidos.map(p=>PedidoCard(p,false))}
+      {vista==="listos" && pedidosListos.map(p=>PedidoCard(p,true))}
 
       {vista==="activos" && pedidos.length===0 && (
-        <p style={{marginTop:20,opacity:0.6}}>
-          No hay pedidos activos
-        </p>
+        <p style={{marginTop:20,opacity:0.5}}>No hay pedidos activos</p>
       )}
 
       {vista==="listos" && pedidosListos.length===0 && (
-        <p style={{marginTop:20,opacity:0.6}}>
-          No hay pedidos listos
-        </p>
+        <p style={{marginTop:20,opacity:0.5}}>No hay pedidos listos</p>
       )}
 
     </div>
