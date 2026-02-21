@@ -1,210 +1,244 @@
+import { useEffect, useState, useRef } from "react";
 import { db } from "../firebase/config";
-import { useEffect, useState } from "react";
-import { auth, messaging } from "./firebase/config";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { getToken, onMessage } from "firebase/messaging";
+import {
+  collection,
+  query,
+  onSnapshot,
+  orderBy,
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc
+} from "firebase/firestore";
 
-import Login from "./pages/Login";
-import Pedidos from "./pages/Pedidos";
-import Ventas from "./pages/Ventas";
-import Productos from "./pages/Productos";
-import Salsas from "./pages/Salsas";
-import Horario from "./pages/Horario";
-import Mensaje from "./pages/Mensaje";
+import ding from "../assets/ding.mp3";
 
-function App() {
+function Pedidos() {
 
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState("pedidos");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [pedidos, setPedidos] = useState([]);
+  const [pedidosListos, setPedidosListos] = useState([]);
+  const [vista, setVista] = useState("activos"); // activos | listos
 
-  // 🔐 LOGIN
+  const audioRef = useRef(null);
+  const pedidosPreviosRef = useRef(0);
+
+  // 🔊 sonido
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return () => unsub();
+    audioRef.current = new Audio(ding);
   }, []);
 
-  // 🔔 NOTIFICACIONES
+  // 🔥 ESCUCHAR PEDIDOS
   useEffect(() => {
-    const activar = async () => {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          const token = await getToken(messaging, {
-            vapidKey: "TU_VAPID"
-          });
-          console.log("TOKEN:", token);
+
+    const q = query(
+      collection(db, "pedidos"),
+      orderBy("fecha", "desc")
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+
+      const activos = [];
+      const listos = [];
+
+      snapshot.forEach((docu) => {
+        const data = docu.data();
+
+        if (data.estado === "nuevo") {
+          activos.push({ id: docu.id, ...data });
         }
-      } catch {}
-    };
 
-    activar();
+        if (data.estado === "listo") {
+          listos.push({ id: docu.id, ...data });
+        }
+      });
 
-    onMessage(messaging, () => {
-      const audio = new Audio("/ding.mp3");
-      audio.play().catch(()=>{});
+      // 🔊 sonido si llegan nuevos
+      if (
+        activos.length > pedidosPreviosRef.current &&
+        pedidosPreviosRef.current !== 0
+      ) {
+        audioRef.current?.play().catch(()=>{});
+      }
+
+      pedidosPreviosRef.current = activos.length;
+
+      setPedidos(activos);
+      setPedidosListos(listos);
+
     });
+
+    return () => unsub();
 
   }, []);
 
-  if (loading) return null;
-  if (!user) return <Login />;
+  // 🔥 MARCAR LISTO
+  const marcarListo = async (pedido) => {
 
-  const Item = ({id,icon,text}) => (
-    <div
-      onClick={()=>{
-        setVista(id);
-        setMenuOpen(false);
-      }}
+    const refPedido = doc(db, "pedidos", pedido.id);
+
+    await updateDoc(refPedido, {
+      estado: "listo"
+    });
+
+    // 🔥 GUARDAR EN VENTAS
+    const hoy = new Date();
+    const fechaId =
+      hoy.getFullYear() + "-" +
+      String(hoy.getMonth()+1).padStart(2,"0") + "-" +
+      String(hoy.getDate()).padStart(2,"0");
+
+    const refVenta = doc(db, "ventas", fechaId);
+    const snap = await getDoc(refVenta);
+
+    let data = {};
+    if (snap.exists()) data = snap.data();
+
+    pedido.productos.forEach(prod => {
+      const name = prod.name.toLowerCase();
+
+      if (name.includes("12")) data.Boneless_12 = (data.Boneless_12 || 0) + 1;
+      if (name.includes("6 pz")) data.Boneless_6 = (data.Boneless_6 || 0) + 1;
+      if (name.includes("gajo")) data.Papas_Gajo = (data.Papas_Gajo || 0) + 1;
+      if (name.includes("francesa")) data.Papas_Francesa = (data.Papas_Francesa || 0) + 1;
+      if (name.includes("queso")) data.Dedos_Queso = (data.Dedos_Queso || 0) + 1;
+    });
+
+    data.total_dia = (data.total_dia || 0) + pedido.total;
+
+    await setDoc(refVenta, data);
+  };
+
+  // 🎨 CARD PEDIDO
+  const PedidoCard = (p, listo=false) => (
+    <div key={p.id}
       style={{
-        padding:"18px",
-        cursor:"pointer",
-        borderRadius:14,
-        marginBottom:6,
-        fontWeight:"bold",
-        fontSize:15,
-        background:
-          vista===id
-          ? "linear-gradient(90deg,#ff7a18,#ff3d00)"
-          : "transparent",
-        boxShadow:
-          vista===id
-          ? "0 10px 25px rgba(255,80,0,0.3)"
-          : "none",
-        transition:"0.2s"
+        background:"#111",
+        color:"white",
+        padding:15,
+        borderRadius:12,
+        marginTop:15
       }}
     >
-      {icon} {text}
+      <h3>{p.cliente}</h3>
+      <p>Tel: {p.telefono}</p>
+      <p>{p.pago === "efectivo" ? "💵" : "💳"} Pago: {p.pago}</p>
+      <p>💲 Total: ${p.total}</p>
+
+      <hr style={{margin:"10px 0"}}/>
+
+      {p.productos.map((prod,i)=>{
+        let emoji="🍗";
+        const name = prod.name.toLowerCase();
+        if(name.includes("papas")) emoji="🍟";
+        if(name.includes("queso")) emoji="🧀";
+
+        return (
+          <div key={i}>
+            {emoji} {prod.name}
+            {prod.quantity>1?` x${prod.quantity}`:""}
+          </div>
+        );
+      })}
+
+      {!listo && (
+        <button
+          onClick={()=>marcarListo(p)}
+          style={{
+            marginTop:10,
+            background:"limegreen",
+            border:"none",
+            padding:"8px 15px",
+            color:"white",
+            borderRadius:8,
+            cursor:"pointer",
+            fontWeight:"bold"
+          }}
+        >
+          Marcar listo
+        </button>
+      )}
+
+      {listo && (
+        <div style={{
+          marginTop:10,
+          background:"#16a34a",
+          padding:8,
+          borderRadius:8,
+          textAlign:"center",
+          fontWeight:"bold"
+        }}>
+          Pedido entregado ✅
+        </div>
+      )}
+
     </div>
   );
 
   return (
-    <div style={{
-      minHeight:"100vh",
-      background:"linear-gradient(180deg,#0f0f0f,#050505)",
-      color:"white"
-    }}>
+    <div style={{padding:20,minHeight:"100%",boxSizing:"border-box"}}>
 
-      {/* HEADER PREMIUM */}
+      <h2>Pedidos 🔥</h2>
+
+      {/* BOTONES */}
       <div style={{
-        padding:"16px 18px",
-        backdropFilter:"blur(14px)",
-        background:"rgba(255,255,255,0.03)",
-        borderBottom:"1px solid rgba(255,255,255,0.06)",
         display:"flex",
-        alignItems:"center",
-        gap:14,
-        position:"sticky",
-        top:0,
-        zIndex:5
+        gap:10,
+        marginTop:15
       }}>
-
-        {/* BOTON MENU */}
-        <div
-          onClick={()=>setMenuOpen(true)}
+        <button
+          onClick={()=>setVista("activos")}
           style={{
-            fontSize:26,
-            cursor:"pointer"
+            flex:1,
+            background: vista==="activos" ? "red" : "#222",
+            color:"white",
+            border:"none",
+            padding:"12px",
+            borderRadius:10,
+            fontWeight:"bold"
           }}
         >
-          ☰
-        </div>
+          🔥 Activos ({pedidos.length})
+        </button>
 
-        <div style={{
-          fontWeight:"bold",
-          fontSize:18,
-          letterSpacing:1
-        }}>
-          🍗 Super Tasty Admin
-        </div>
-
-        <div style={{marginLeft:"auto"}}>
-          <button
-            onClick={()=>signOut(auth)}
-            style={{
-              background:"linear-gradient(90deg,#ff7a18,#ff3d00)",
-              border:"none",
-              padding:"10px 16px",
-              borderRadius:12,
-              color:"white",
-              fontWeight:"bold",
-              cursor:"pointer",
-              boxShadow:"0 10px 25px rgba(255,80,0,0.35)"
-            }}
-          >
-            Salir
-          </button>
-        </div>
-      </div>
-
-      {/* CONTENIDO */}
-      <div style={{
-        padding:20,
-        maxWidth:1100,
-        margin:"auto"
-      }}>
-        {vista==="pedidos" && <Pedidos/>}
-        {vista==="ventas" && <Ventas/>}
-        {vista==="productos" && <Productos/>}
-        {vista==="salsas" && <Salsas/>}
-        {vista==="horario" && <Horario/>}
-        {vista==="mensaje" && <Mensaje/>}
-      </div>
-
-      {/* OVERLAY */}
-      {menuOpen && (
-        <div
-          onClick={()=>setMenuOpen(false)}
+        <button
+          onClick={()=>setVista("listos")}
           style={{
-            position:"fixed",
-            top:0,left:0,
-            width:"100%",
-            height:"100%",
-            background:"rgba(0,0,0,0.6)",
-            zIndex:9
+            flex:1,
+            background: vista==="listos" ? "#16a34a" : "#222",
+            color:"white",
+            border:"none",
+            padding:"12px",
+            borderRadius:10,
+            fontWeight:"bold"
           }}
-        />
+        >
+          ✅ Listos ({pedidosListos.length})
+        </button>
+      </div>
+
+      {/* LISTA */}
+      {vista==="activos" &&
+        pedidos.map(p=>PedidoCard(p,false))
+      }
+
+      {vista==="listos" &&
+        pedidosListos.map(p=>PedidoCard(p,true))
+      }
+
+      {vista==="activos" && pedidos.length===0 && (
+        <p style={{marginTop:20,opacity:0.6}}>
+          No hay pedidos activos
+        </p>
       )}
 
-      {/* SIDEBAR PREMIUM */}
-      <div style={{
-        position:"fixed",
-        top:0,
-        left: menuOpen ? 0 : -280,
-        width:270,
-        height:"100%",
-        background:"rgba(20,20,20,0.95)",
-        backdropFilter:"blur(20px)",
-        zIndex:10,
-        transition:"0.3s",
-        padding:20,
-        boxShadow:"0 0 40px rgba(0,0,0,0.8)"
-      }}>
-
-        <div style={{
-          fontSize:22,
-          fontWeight:"bold",
-          marginBottom:25,
-          textAlign:"center"
-        }}>
-          ⚙️ Panel Admin
-        </div>
-
-        <Item id="pedidos" icon="🔥" text="Pedidos"/>
-        <Item id="ventas" icon="📊" text="Ventas"/>
-        <Item id="productos" icon="🍔" text="Productos"/>
-        <Item id="salsas" icon="🌶️" text="Salsas"/>
-        <Item id="horario" icon="⏰" text="Horario"/>
-        <Item id="mensaje" icon="💬" text="Mensaje tienda"/>
-
-      </div>
+      {vista==="listos" && pedidosListos.length===0 && (
+        <p style={{marginTop:20,opacity:0.6}}>
+          No hay pedidos listos
+        </p>
+      )}
 
     </div>
   );
 }
 
-export default App;
+export default Pedidos;
