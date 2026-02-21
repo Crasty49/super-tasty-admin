@@ -137,19 +137,51 @@ function Pedidos() {
 
       <hr style={{margin:"12px 0",opacity:0.15}}/>
 
-      {p.productos.map((prod,i)=>{
-        let emoji="🍗";
-        const name = prod.name.toLowerCase();
-        if(name.includes("papas")) emoji="🍟";
-        if(name.includes("queso")) emoji="🧀";
+    {p.productos.map((prod,i)=>{
+      let emoji="🍗";
+      const name = prod.name.toLowerCase();
 
-        return (
-          <div key={i} style={{marginBottom:4,opacity:0.9}}>
+      if(name.includes("papas")) emoji="🍟";
+      if(name.includes("queso")) emoji="🧀";
+
+      return (
+        <div key={i} style={{marginBottom:8,opacity:0.95}}>
+
+          {/* NOMBRE */}
+          <div>
             {emoji} {prod.name}
             {prod.quantity>1?` x${prod.quantity}`:""}
           </div>
-        );
-      })}
+
+          {/* MODO */}
+          {prod.mode && (
+            <div style={{fontSize:13,opacity:0.7,marginLeft:18}}>
+              🔥 {prod.mode === "banados" ? "Bañados" : "Naturales"}
+            </div>
+          )}
+
+          {/* SALSAS INCLUIDAS */}
+          {prod.includedSauces?.length > 0 && (
+            <div style={{fontSize:13,opacity:0.7,marginLeft:18}}>
+              🥫 Incluidas: {prod.includedSauces.join(", ")}
+            </div>
+          )}
+
+          {/* SALSAS EXTRAS */}
+          {prod.extraSauces?.length > 0 && (
+            <div style={{
+              fontSize:13,
+              marginLeft:18,
+              color:"#facc15",
+              fontWeight:"bold"
+            }}>
+              ⭐ Extras: {prod.extraSauces.join(", ")}
+            </div>
+          )}
+
+        </div>
+      );
+    })}
 
       {!listo && (
         <button
