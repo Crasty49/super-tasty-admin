@@ -60,11 +60,14 @@ function App() {
         setMenuOpen(false);
       }}
       style={{
-        padding:"16px",
-        borderBottom:"1px solid #222",
+        padding:"16px 18px",
         cursor:"pointer",
-        background: vista===id ? "#16a34a" : "transparent",
-        fontWeight:"bold"
+        fontWeight:"600",
+        borderBottom:"1px solid rgba(255,255,255,0.05)",
+        background: vista===id
+          ? "linear-gradient(90deg,#22c55e,#16a34a)"
+          : "transparent",
+        transition:"0.2s"
       }}
     >
       {icon} {text}
@@ -72,13 +75,18 @@ function App() {
   );
 
   return (
-    <div style={{background:"#0b0b0b",minHeight:"100vh",color:"white"}}>
+    <div style={{
+      minHeight:"100vh",
+      background:"linear-gradient(135deg,#020617,#09090b,#020617)",
+      color:"white",
+      fontFamily:"-apple-system,BlinkMacSystemFont,Arial"
+    }}>
 
-      {/* HEADER */}
+      {/* HEADER PREMIUM */}
       <div style={{
         padding:18,
         backdropFilter:"blur(20px)",
-        background:"rgba(0,0,0,0.6)",
+        background:"rgba(0,0,0,0.7)",
         borderBottom:"1px solid rgba(255,255,255,0.05)",
         display:"flex",
         alignItems:"center",
@@ -88,8 +96,11 @@ function App() {
         zIndex:5
       }}>
 
-        <div onClick={()=>setMenuOpen(true)}
-          style={{fontSize:26,cursor:"pointer"}}>
+        {/* MENU BTN */}
+        <div
+          onClick={()=>setMenuOpen(true)}
+          style={{fontSize:26,cursor:"pointer"}}
+        >
           ☰
         </div>
 
@@ -104,43 +115,15 @@ function App() {
         <div style={{marginLeft:"auto"}}>
           <button
             onClick={()=>signOut(auth)}
-            className="btn"
             style={{
               background:"linear-gradient(45deg,#ef4444,#dc2626)",
-              color:"white"
-            }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-
-      </div>
-
-        {/* BOTON MENU */}
-        <div
-          onClick={()=>setMenuOpen(true)}
-          style={{
-            fontSize:26,
-            cursor:"pointer"
-          }}
-        >
-          ☰
-        </div>
-
-        <div style={{fontWeight:"bold",fontSize:18}}>
-          🍗 Super Tasty Admin
-        </div>
-
-        <div style={{marginLeft:"auto"}}>
-          <button
-            onClick={()=>signOut(auth)}
-            style={{
-              background:"#dc2626",
               border:"none",
-              padding:"8px 14px",
-              borderRadius:10,
+              padding:"10px 16px",
+              borderRadius:12,
               color:"white",
-              fontWeight:"bold"
+              fontWeight:"bold",
+              cursor:"pointer",
+              boxShadow:"0 0 15px rgba(239,68,68,0.4)"
             }}
           >
             Salir
@@ -151,9 +134,9 @@ function App() {
 
       {/* CONTENIDO */}
       <div style={{
-        padding:15,
-        minHeight:"calc(100vh - 70px)",
-        background:"#0b0b0b"
+        padding:20,
+        maxWidth:1000,
+        margin:"0 auto"
       }}>
         {vista==="pedidos" && <Pedidos/>}
         {vista==="ventas" && <Ventas/>}
@@ -163,7 +146,7 @@ function App() {
         {vista==="mensaje" && <Mensaje/>}
       </div>
 
-      {/* OVERLAY NEGRO */}
+      {/* OVERLAY */}
       {menuOpen && (
         <div
           onClick={()=>setMenuOpen(false)}
@@ -172,30 +155,32 @@ function App() {
             top:0,left:0,
             width:"100%",
             height:"100%",
-            background:"rgba(0,0,0,0.6)",
+            background:"rgba(0,0,0,0.7)",
+            backdropFilter:"blur(6px)",
             zIndex:9
           }}
         />
       )}
 
-      {/* SIDEBAR SLIDE */}
+      {/* SIDEBAR PREMIUM */}
       <div style={{
         position:"fixed",
         top:0,
-        left: menuOpen ? 0 : -270,
-        width:260,
+        left: menuOpen ? 0 : -290,
+        width:270,
         height:"100%",
-        background:"#050505",
+        background:"rgba(10,10,10,0.95)",
+        backdropFilter:"blur(20px)",
         zIndex:10,
-        transition:"0.3s",
-        boxShadow:"0 0 25px black"
+        transition:"0.35s",
+        boxShadow:"0 0 40px black"
       }}>
 
         <div style={{
-          padding:20,
+          padding:25,
           fontSize:20,
           fontWeight:"bold",
-          borderBottom:"1px solid #222"
+          borderBottom:"1px solid rgba(255,255,255,0.05)"
         }}>
           ⚙️ Panel admin
         </div>
