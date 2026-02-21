@@ -180,7 +180,7 @@ function Ventas() {
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={dataHoy}>
             <CartesianGrid stroke="#333"/>
-            <XAxis dataKey="name" stroke="#fff" interval={0} angle={-20} textAnchor="end" height={60} tick={{ fontSize: 10 }}/>
+            <XAxis dataKey="name" stroke="#fff" interval={0} angle={-18} textAnchor="end" height={60} tick={{ fontSize: 10 }}/>
             <YAxis stroke="#fff"/>
             <Tooltip/>
             <Bar dataKey="value">
