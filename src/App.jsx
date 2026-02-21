@@ -60,13 +60,20 @@ function App() {
         setMenuOpen(false);
       }}
       style={{
-        padding:"16px 18px",
+        padding:"18px",
         cursor:"pointer",
-        fontWeight:"600",
-        borderBottom:"1px solid rgba(255,255,255,0.05)",
-        background: vista===id
-          ? "linear-gradient(90deg,#22c55e,#16a34a)"
+        borderRadius:14,
+        marginBottom:6,
+        fontWeight:"bold",
+        fontSize:15,
+        background:
+          vista===id
+          ? "linear-gradient(90deg,#ff7a18,#ff3d00)"
           : "transparent",
+        boxShadow:
+          vista===id
+          ? "0 10px 25px rgba(255,80,0,0.3)"
+          : "none",
         transition:"0.2s"
       }}
     >
@@ -77,29 +84,31 @@ function App() {
   return (
     <div style={{
       minHeight:"100vh",
-      background:"linear-gradient(135deg,#020617,#09090b,#020617)",
-      color:"white",
-      fontFamily:"-apple-system,BlinkMacSystemFont,Arial"
+      background:"linear-gradient(180deg,#0f0f0f,#050505)",
+      color:"white"
     }}>
 
       {/* HEADER PREMIUM */}
       <div style={{
-        padding:18,
-        backdropFilter:"blur(20px)",
-        background:"rgba(0,0,0,0.7)",
-        borderBottom:"1px solid rgba(255,255,255,0.05)",
+        padding:"16px 18px",
+        backdropFilter:"blur(14px)",
+        background:"rgba(255,255,255,0.03)",
+        borderBottom:"1px solid rgba(255,255,255,0.06)",
         display:"flex",
         alignItems:"center",
-        gap:15,
+        gap:14,
         position:"sticky",
         top:0,
         zIndex:5
       }}>
 
-        {/* MENU BTN */}
+        {/* BOTON MENU */}
         <div
           onClick={()=>setMenuOpen(true)}
-          style={{fontSize:26,cursor:"pointer"}}
+          style={{
+            fontSize:26,
+            cursor:"pointer"
+          }}
         >
           ☰
         </div>
@@ -116,27 +125,26 @@ function App() {
           <button
             onClick={()=>signOut(auth)}
             style={{
-              background:"linear-gradient(45deg,#ef4444,#dc2626)",
+              background:"linear-gradient(90deg,#ff7a18,#ff3d00)",
               border:"none",
               padding:"10px 16px",
               borderRadius:12,
               color:"white",
               fontWeight:"bold",
               cursor:"pointer",
-              boxShadow:"0 0 15px rgba(239,68,68,0.4)"
+              boxShadow:"0 10px 25px rgba(255,80,0,0.35)"
             }}
           >
             Salir
           </button>
         </div>
-
       </div>
 
       {/* CONTENIDO */}
       <div style={{
         padding:20,
-        maxWidth:1000,
-        margin:"0 auto"
+        maxWidth:1100,
+        margin:"auto"
       }}>
         {vista==="pedidos" && <Pedidos/>}
         {vista==="ventas" && <Ventas/>}
@@ -155,8 +163,7 @@ function App() {
             top:0,left:0,
             width:"100%",
             height:"100%",
-            background:"rgba(0,0,0,0.7)",
-            backdropFilter:"blur(6px)",
+            background:"rgba(0,0,0,0.6)",
             zIndex:9
           }}
         />
@@ -166,23 +173,24 @@ function App() {
       <div style={{
         position:"fixed",
         top:0,
-        left: menuOpen ? 0 : -290,
+        left: menuOpen ? 0 : -280,
         width:270,
         height:"100%",
-        background:"rgba(10,10,10,0.95)",
+        background:"rgba(20,20,20,0.95)",
         backdropFilter:"blur(20px)",
         zIndex:10,
-        transition:"0.35s",
-        boxShadow:"0 0 40px black"
+        transition:"0.3s",
+        padding:20,
+        boxShadow:"0 0 40px rgba(0,0,0,0.8)"
       }}>
 
         <div style={{
-          padding:25,
-          fontSize:20,
+          fontSize:22,
           fontWeight:"bold",
-          borderBottom:"1px solid rgba(255,255,255,0.05)"
+          marginBottom:25,
+          textAlign:"center"
         }}>
-          ⚙️ Panel admin
+          ⚙️ Panel Admin
         </div>
 
         <Item id="pedidos" icon="🔥" text="Pedidos"/>
