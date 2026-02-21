@@ -1,3 +1,4 @@
+import { db } from "../firebase/config";
 import { useEffect, useState } from "react";
 import { auth, messaging } from "./firebase/config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
