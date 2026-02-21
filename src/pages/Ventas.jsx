@@ -16,14 +16,13 @@ function Ventas() {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
 
-  // 📅 fecha hoy
   const hoy = new Date();
   const fechaId =
     hoy.getFullYear() + "-" +
     String(hoy.getMonth()+1).padStart(2,"0") + "-" +
     String(hoy.getDate()).padStart(2,"0");
 
-  // 🔥 ventas hoy realtime
+  // 🔥 realtime hoy
   useEffect(() => {
     const ref = doc(db, "ventas", fechaId);
 
@@ -35,7 +34,7 @@ function Ventas() {
     return () => unsub();
   }, []);
 
-  // 📊 ventas semana
+  // 🔥 semana
   useEffect(() => {
     const obtenerSemana = async () => {
       const snapshot = await getDocs(collection(db, "ventas"));
@@ -88,15 +87,15 @@ function Ventas() {
       }
     });
 
-    const doc = new jsPDF();
+    const docPDF = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.text("Super Tasty Boneless", 14, 20);
+    docPDF.setFontSize(18);
+    docPDF.text("Super Tasty Boneless", 14, 20);
 
-    doc.setFontSize(12);
-    doc.text(`Reporte del ${fechaInicio} al ${fechaFin}`, 14, 30);
+    docPDF.setFontSize(12);
+    docPDF.text(`Reporte del ${fechaInicio} al ${fechaFin}`, 14, 30);
 
-    autoTable(doc, {
+    autoTable(docPDF, {
       startY: 40,
       head: [["Producto", "Cantidad"]],
       body: [
@@ -108,12 +107,11 @@ function Ventas() {
       ]
     });
 
-    doc.text(`TOTAL: $${resumen.total}`, 14, doc.lastAutoTable.finalY + 15);
+    docPDF.text(`TOTAL: $${resumen.total}`, 14, docPDF.lastAutoTable.finalY + 15);
 
-    doc.save(`Ventas_${fechaInicio}_${fechaFin}.pdf`);
+    docPDF.save(`Ventas_${fechaInicio}_${fechaFin}.pdf`);
   };
 
-  // 📊 grafica hoy
   const dataHoy = [
     { name: "Boneless 12pz", value: ventasHoy.Boneless_12 || 0 },
     { name: "Boneless 6pz", value: ventasHoy.Boneless_6 || 0 },
@@ -124,57 +122,51 @@ function Ventas() {
 
   const maxValue = Math.max(...dataHoy.map(d=>d.value));
 
+  const card = {
+    background:"rgba(255,255,255,0.04)",
+    backdropFilter:"blur(20px)",
+    border:"1px solid rgba(255,255,255,0.08)",
+    padding:22,
+    borderRadius:20,
+    boxShadow:"0 20px 50px rgba(0,0,0,0.6)",
+    marginTop:20
+  };
+
   return (
-    <div style={{padding:30,color:"white"}}>
+    <div style={{maxWidth:950,margin:"auto",padding:10,color:"white"}}>
 
-      <h1 style={{fontSize:28}}>📊 Dashboard de Ventas</h1>
+      <h1 style={{fontSize:28,fontWeight:"bold",marginBottom:10}}>
+        📊 Dashboard de Ventas
+      </h1>
 
-      {/* EXPORTAR PDF */}
-      <div style={{
-        marginTop:20,
-        background:"#111",
-        padding:20,
-        borderRadius:15,
-        display:"flex",
-        gap:10,
-        flexWrap:"wrap"
-      }}>
-        <input type="date" value={fechaInicio} onChange={e=>setFechaInicio(e.target.value)} />
-        <input type="date" value={fechaFin} onChange={e=>setFechaFin(e.target.value)} />
+      {/* EXPORTAR */}
+      <div style={{...card,display:"flex",gap:10,flexWrap:"wrap"}}>
+        <input
+          type="date"
+          value={fechaInicio}
+          onChange={e=>setFechaInicio(e.target.value)}
+          style={input}
+        />
+        <input
+          type="date"
+          value={fechaFin}
+          onChange={e=>setFechaFin(e.target.value)}
+          style={input}
+        />
 
-        <button onClick={exportarPDF}
-          style={{
-            background:"orange",
-            border:"none",
-            padding:"10px 18px",
-            borderRadius:10,
-            fontWeight:"bold",
-            cursor:"pointer"
-          }}>
+        <button onClick={exportarPDF} style={btn}>
           Exportar PDF
         </button>
       </div>
 
       {/* TOTAL */}
-      <div style={{
-        marginTop:20,
-        background:"#111",
-        padding:25,
-        borderRadius:15,
-        fontSize:24,
-        fontWeight:"bold"
-      }}>
+      <div style={{...card,fontSize:26,fontWeight:"bold"}}>
         💰 Total vendido hoy: ${ventasHoy.total_dia || 0}
       </div>
 
       {/* PRODUCTOS */}
-      <div style={{
-        marginTop:20,
-        background:"#111",
-        padding:20,
-        borderRadius:15
-      }}>
-        <h2>🍗 Productos vendidos hoy</h2>
+      <div style={card}>
+        <h3>Productos vendidos hoy</h3>
         <div>Boneless 12pz: {ventasHoy.Boneless_12 || 0}</div>
         <div>Boneless 6pz: {ventasHoy.Boneless_6 || 0}</div>
         <div>Papas gajo: {ventasHoy.Papas_Gajo || 0}</div>
@@ -183,25 +175,18 @@ function Ventas() {
       </div>
 
       {/* GRAFICA HOY */}
-      <div style={{marginTop:25}}>
+      <div style={card}>
+        <h3>Productos vendidos hoy</h3>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={dataHoy}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis
-              dataKey="name"
-              stroke="#fff"
-              interval={0}
-              angle={-35}
-              textAnchor="end"
-              height={70}
-              tick={{ fontSize: 10 }}
-            />
+            <CartesianGrid stroke="#333"/>
+            <XAxis dataKey="name" stroke="#fff" interval={0} angle={-20} textAnchor="end" height={60}/>
             <YAxis stroke="#fff"/>
             <Tooltip/>
             <Bar dataKey="value">
               {dataHoy.map((entry,index)=>(
                 <Cell key={index}
-                  fill={entry.value===maxValue && maxValue>0 ? "#22c55e":"#ef4444"}
+                  fill={entry.value===maxValue && maxValue>0 ? "#22c55e":"#ff3d00"}
                 />
               ))}
             </Bar>
@@ -209,18 +194,12 @@ function Ventas() {
         </ResponsiveContainer>
       </div>
 
-      {/* GRAFICA SEMANA */}
-      <div style={{
-        marginTop:30,
-        background:"#111",
-        padding:20,
-        borderRadius:15
-      }}>
-        <h2>Ventas últimos 7 días</h2>
-
-        <ResponsiveContainer width="100%" height={300}>
+      {/* SEMANA */}
+      <div style={card}>
+        <h3>Ventas últimos 7 días</h3>
+        <ResponsiveContainer width="100%" height={260}>
           <BarChart data={ventasSemana}>
-            <CartesianGrid strokeDasharray="3 3"/>
+            <CartesianGrid stroke="#333"/>
             <XAxis dataKey="fecha" stroke="#fff"/>
             <YAxis stroke="#fff"/>
             <Tooltip/>
@@ -232,5 +211,24 @@ function Ventas() {
     </div>
   );
 }
+
+const btn = {
+  background:"linear-gradient(90deg,#ff7a18,#ff3d00)",
+  border:"none",
+  padding:"12px 18px",
+  borderRadius:14,
+  color:"white",
+  fontWeight:"bold",
+  cursor:"pointer",
+  boxShadow:"0 10px 25px rgba(255,80,0,0.35)"
+};
+
+const input = {
+  background:"#111",
+  border:"1px solid #333",
+  padding:"10px",
+  borderRadius:10,
+  color:"white"
+};
 
 export default Ventas;
