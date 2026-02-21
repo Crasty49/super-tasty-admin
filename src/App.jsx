@@ -76,13 +76,45 @@ function App() {
 
       {/* HEADER */}
       <div style={{
-        padding:15,
-        background:"#050505",
+        padding:18,
+        backdropFilter:"blur(20px)",
+        background:"rgba(0,0,0,0.6)",
+        borderBottom:"1px solid rgba(255,255,255,0.05)",
         display:"flex",
         alignItems:"center",
         gap:15,
-        borderBottom:"1px solid #111"
+        position:"sticky",
+        top:0,
+        zIndex:5
       }}>
+
+        <div onClick={()=>setMenuOpen(true)}
+          style={{fontSize:26,cursor:"pointer"}}>
+          ☰
+        </div>
+
+        <div style={{
+          fontWeight:"bold",
+          fontSize:18,
+          letterSpacing:1
+        }}>
+          🍗 Super Tasty Admin
+        </div>
+
+        <div style={{marginLeft:"auto"}}>
+          <button
+            onClick={()=>signOut(auth)}
+            className="btn"
+            style={{
+              background:"linear-gradient(45deg,#ef4444,#dc2626)",
+              color:"white"
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+
+      </div>
 
         {/* BOTON MENU */}
         <div
