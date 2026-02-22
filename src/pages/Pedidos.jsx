@@ -33,6 +33,10 @@ function Pedidos() {
   }, []);
 
   useEffect(()=>{
+    Notification.requestPermission();
+  },[]);
+
+  useEffect(()=>{
     activarNotificaciones();
     escucharForeground();
   },[]);
@@ -78,6 +82,14 @@ function Pedidos() {
         pedidosPreviosRef.current !== 0
       ) {
         audioRef.current?.play().catch(()=>{});
+      }
+
+      if (Notification.permission === "granted") {
+        new Notification("🔥 Nuevo pedido", {
+          body: "Revisa el panel admin",
+          icon: "/icon-192.png",
+          vibrate: [200,100,200]
+        });
       }
 
       pedidosPreviosRef.current = activos.length;
