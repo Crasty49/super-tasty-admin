@@ -21,6 +21,9 @@ function Pedidos() {
   const [pedidosListos, setPedidosListos] = useState([]);
   const [vista, setVista] = useState("activos");
 
+  // 🔥 reloj en vivo
+  const [now, setNow] = useState(Date.now());
+
   const audioRef = useRef(null);
   const pedidosPreviosRef = useRef(0);
 
@@ -28,7 +31,15 @@ function Pedidos() {
     audioRef.current = new Audio(ding);
   }, []);
 
-  // 🔥 FILTRAR SOLO PEDIDOS DEL DÍA ACTUAL
+  // ⏱ actualizar tiempo cada 30 seg
+  useEffect(()=>{
+    const interval = setInterval(()=>{
+      setNow(Date.now());
+    },30000);
+    return ()=>clearInterval(interval);
+  },[]);
+
+  // 🔥 SOLO pedidos del día actual
   useEffect(() => {
 
     const hoy = new Date();
@@ -52,13 +63,8 @@ function Pedidos() {
       snapshot.forEach((docu) => {
         const data = docu.data();
 
-        if (data.estado === "nuevo") {
-          activos.push({ id: docu.id, ...data });
-        }
-
-        if (data.estado === "listo") {
-          listos.push({ id: docu.id, ...data });
-        }
+        if (data.estado === "nuevo") activos.push({ id: docu.id, ...data });
+        if (data.estado === "listo") listos.push({ id: docu.id, ...data });
       });
 
       if (
@@ -72,20 +78,34 @@ function Pedidos() {
 
       setPedidos(activos);
       setPedidosListos(listos);
-
     });
 
     return () => unsub();
 
   }, []);
 
+  // ⏱ calcular tiempo
+  const tiempoTranscurrido = (fechaFirestore) => {
+    if (!fechaFirestore) return "";
+
+    const fecha = fechaFirestore.toDate().getTime();
+    const diff = now - fecha;
+
+    const min = Math.floor(diff/60000);
+    const hrs = Math.floor(min/60);
+
+    if (min < 1) return "ahora";
+    if (min < 60) return `${min} min`;
+    if (hrs < 24) return `${hrs}h ${min%60}m`;
+
+    return "";
+  };
+
   const marcarListo = async (pedido) => {
 
     const refPedido = doc(db, "pedidos", pedido.id);
 
-    await updateDoc(refPedido, {
-      estado: "listo"
-    });
+    await updateDoc(refPedido, { estado: "listo" });
 
     const hoy = new Date();
     const fechaId =
@@ -114,6 +134,7 @@ function Pedidos() {
     await setDoc(refVenta, data);
   };
 
+  // 🎨 CARD
   const PedidoCard = (p, listo=false) => (
     <div key={p.id}
       style={{
@@ -126,7 +147,19 @@ function Pedidos() {
         boxShadow:"0 10px 30px rgba(0,0,0,0.5)"
       }}
     >
-      <h3 style={{marginBottom:5}}>{p.cliente}</h3>
+
+      {/* CLIENTE + TIEMPO */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h3 style={{marginBottom:5}}>{p.cliente}</h3>
+
+        <div style={{
+          fontSize:12,
+          opacity:0.6,
+          fontWeight:"bold"
+        }}>
+          ⏱ {tiempoTranscurrido(p.fecha)}
+        </div>
+      </div>
 
       <div style={{opacity:0.8,fontSize:14}}>
         Tel: {p.telefono}
@@ -166,12 +199,7 @@ function Pedidos() {
             {isBoneless && (
               <>
                 {prod.mode && (
-                  <div style={{
-                    fontSize:13,
-                    marginLeft:18,
-                    color:"#fb923c",
-                    fontWeight:"bold"
-                  }}>
+                  <div style={{fontSize:13,marginLeft:18,color:"#fb923c",fontWeight:"bold"}}>
                     🔥 {prod.mode === "banados"
                       ? "Bañados"
                       : prod.mode === "naturales_salsa"
@@ -180,23 +208,14 @@ function Pedidos() {
                   </div>
                 )}
 
-                {prod.includedSauces && prod.includedSauces.length > 0 && (
-                  <div style={{
-                    fontSize:13,
-                    marginLeft:18,
-                    opacity:0.8
-                  }}>
+                {prod.includedSauces?.length>0 && (
+                  <div style={{fontSize:13,marginLeft:18,opacity:0.8}}>
                     🥫 Incluidas: {prod.includedSauces.join(", ")}
                   </div>
                 )}
 
-                {prod.extraSauces && prod.extraSauces.length > 0 && (
-                  <div style={{
-                    fontSize:13,
-                    marginLeft:18,
-                    color:"#facc15",
-                    fontWeight:"bold"
-                  }}>
+                {prod.extraSauces?.length>0 && (
+                  <div style={{fontSize:13,marginLeft:18,color:"#facc15",fontWeight:"bold"}}>
                     ⭐ Extras: {prod.extraSauces.join(", ")}
                   </div>
                 )}
@@ -210,17 +229,12 @@ function Pedidos() {
         <button
           onClick={()=>marcarListo(p)}
           style={{
-            marginTop:14,
-            width:"100%",
+            marginTop:14,width:"100%",
             background:"linear-gradient(90deg,#22c55e,#16a34a)",
-            border:"none",
-            padding:"12px",
-            borderRadius:14,
-            color:"white",
-            fontWeight:"bold",
-            cursor:"pointer",
-            fontSize:15,
-            boxShadow:"0 10px 25px rgba(0,0,0,0.5)"
+            border:"none",padding:"12px",
+            borderRadius:14,color:"white",
+            fontWeight:"bold",cursor:"pointer",
+            fontSize:15
           }}
         >
           Marcar listo
