@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { activarNotificaciones, escucharForeground } from "../firebase/notificaciones";
 import { db } from "../firebase/config";
 import {
   collection,
@@ -30,6 +31,11 @@ function Pedidos() {
   useEffect(() => {
     audioRef.current = new Audio(ding);
   }, []);
+
+  useEffect(()=>{
+    activarNotificaciones();
+    escucharForeground();
+  },[]);
 
   // ⏱ actualizar tiempo cada 30 seg
   useEffect(()=>{

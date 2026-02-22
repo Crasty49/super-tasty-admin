@@ -1,5 +1,5 @@
-importScripts("https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js");
 
 firebase.initializeApp({
   apiKey: "AIzaSyAd5SlNdTEP-ykh4vyLZAsLRPOXaOK_gl8",
@@ -12,18 +12,10 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 👇 ESTE BLOQUE ES CLAVE
-self.addEventListener("push", function(event) {
-  const data = event.data?.json() || {};
-
-  const title = data.notification?.title || "🔥 Nuevo pedido";
-  const options = {
-    body: data.notification?.body || "Tienes un nuevo pedido",
-    icon: "/logo192.png",
-    badge: "/logo192.png"
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+messaging.onBackgroundMessage(function(payload) {
+  self.registration.showNotification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: "/icon-192.png",
+    vibrate: [200,100,200]
+  });
 });
