@@ -8,7 +8,9 @@ import {
   doc,
   updateDoc,
   getDoc,
-  setDoc
+  setDoc,
+  where,
+  Timestamp
 } from "firebase/firestore";
 
 import ding from "../assets/ding.mp3";
@@ -26,11 +28,20 @@ function Pedidos() {
     audioRef.current = new Audio(ding);
   }, []);
 
+  // 🔥 FILTRAR SOLO PEDIDOS DEL DÍA ACTUAL
   useEffect(() => {
+
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate()+1);
 
     const q = query(
       collection(db, "pedidos"),
-      orderBy("fecha", "desc")
+      where("fecha", ">=", Timestamp.fromDate(hoy)),
+      where("fecha", "<", Timestamp.fromDate(manana)),
+      orderBy("fecha","desc")
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
@@ -103,7 +114,6 @@ function Pedidos() {
     await setDoc(refVenta, data);
   };
 
-  // 🔥 CARD PREMIUM
   const PedidoCard = (p, listo=false) => (
     <div key={p.id}
       style={{
@@ -137,71 +147,64 @@ function Pedidos() {
 
       <hr style={{margin:"12px 0",opacity:0.15}}/>
 
-    {p.productos.map((prod,i)=>{
-      let emoji="🍗";
-      const name = prod.name?.toLowerCase() || "";
+      {p.productos.map((prod,i)=>{
+        let emoji="🍗";
+        const name = prod.name?.toLowerCase() || "";
 
-      if(name.includes("papas")) emoji="🍟";
-      if(name.includes("queso")) emoji="🧀";
+        if(name.includes("papas")) emoji="🍟";
+        if(name.includes("queso")) emoji="🧀";
 
-      const isBoneless = name.includes("boneless");
+        const isBoneless = name.includes("boneless");
 
-      return (
-        <div key={i} style={{marginBottom:10,opacity:0.95}}>
+        return (
+          <div key={i} style={{marginBottom:10,opacity:0.95}}>
+            <div style={{fontWeight:"bold"}}>
+              {emoji} {prod.name}
+              {prod.quantity>1?` x${prod.quantity}`:""}
+            </div>
 
-          {/* NOMBRE */}
-          <div style={{fontWeight:"bold"}}>
-            {emoji} {prod.name}
-            {prod.quantity>1?` x${prod.quantity}`:""}
+            {isBoneless && (
+              <>
+                {prod.mode && (
+                  <div style={{
+                    fontSize:13,
+                    marginLeft:18,
+                    color:"#fb923c",
+                    fontWeight:"bold"
+                  }}>
+                    🔥 {prod.mode === "banados"
+                      ? "Bañados"
+                      : prod.mode === "naturales_salsa"
+                      ? "Naturales + salsa aparte"
+                      : "Naturales"}
+                  </div>
+                )}
+
+                {prod.includedSauces && prod.includedSauces.length > 0 && (
+                  <div style={{
+                    fontSize:13,
+                    marginLeft:18,
+                    opacity:0.8
+                  }}>
+                    🥫 Incluidas: {prod.includedSauces.join(", ")}
+                  </div>
+                )}
+
+                {prod.extraSauces && prod.extraSauces.length > 0 && (
+                  <div style={{
+                    fontSize:13,
+                    marginLeft:18,
+                    color:"#facc15",
+                    fontWeight:"bold"
+                  }}>
+                    ⭐ Extras: {prod.extraSauces.join(", ")}
+                  </div>
+                )}
+              </>
+            )}
           </div>
-
-          {/* SOLO SI ES BONELESS */}
-          {isBoneless && (
-            <>
-              {/* MODO */}
-              {prod.mode && (
-                <div style={{
-                  fontSize:13,
-                  marginLeft:18,
-                  color:"#fb923c",
-                  fontWeight:"bold"
-                }}>
-                  🔥 {prod.mode === "banados"
-                    ? "Bañados"
-                    : prod.mode === "naturales_salsa"
-                    ? "Naturales + salsa aparte"
-                    : "Naturales"}
-                </div>
-              )}
-
-              {/* INCLUIDAS */}
-              {prod.includedSauces && prod.includedSauces.length > 0 && (
-                <div style={{
-                  fontSize:13,
-                  marginLeft:18,
-                  opacity:0.8
-                }}>
-                  🥫 Incluidas: {prod.includedSauces.join(", ")}
-                </div>
-              )}
-
-              {/* EXTRAS */}
-              {prod.extraSauces && prod.extraSauces.length > 0 && (
-                <div style={{
-                  fontSize:13,
-                  marginLeft:18,
-                  color:"#facc15",
-                  fontWeight:"bold"
-                }}>
-                  ⭐ Extras: {prod.extraSauces.join(", ")}
-                </div>
-              )}
-            </>
-          )}
-
-        </div>
-      );
-    })}
+        );
+      })}
 
       {!listo && (
         <button
@@ -237,59 +240,32 @@ function Pedidos() {
           Pedido entregado ✅
         </div>
       )}
-
     </div>
   );
 
   return (
     <div style={{padding:10}}>
 
-      <h2 style={{
-        fontSize:24,
-        marginBottom:10
-      }}>
+      <h2 style={{fontSize:24,marginBottom:10}}>
         Pedidos
       </h2>
 
-      {/* BOTONES */}
-      <div style={{
-        display:"flex",
-        gap:10,
-        marginTop:10
-      }}>
-        <button
-          onClick={()=>setVista("activos")}
-          style={{
-            flex:1,
-            padding:12,
-            borderRadius:14,
-            border:"none",
-            fontWeight:"bold",
-            background:
-              vista==="activos"
-              ? "linear-gradient(90deg,#ff7a18,#ff3d00)"
-              : "#1a1a1a",
-            color:"white"
-          }}
-        >
+      <div style={{display:"flex",gap:10,marginTop:10}}>
+        <button onClick={()=>setVista("activos")} style={{
+          flex:1,padding:12,borderRadius:14,border:"none",fontWeight:"bold",
+          background:vista==="activos"
+          ? "linear-gradient(90deg,#ff7a18,#ff3d00)"
+          : "#1a1a1a",color:"white"
+        }}>
           🔥 Activos ({pedidos.length})
         </button>
 
-        <button
-          onClick={()=>setVista("listos")}
-          style={{
-            flex:1,
-            padding:12,
-            borderRadius:14,
-            border:"none",
-            fontWeight:"bold",
-            background:
-              vista==="listos"
-              ? "linear-gradient(90deg,#22c55e,#16a34a)"
-              : "#1a1a1a",
-            color:"white"
-          }}
-        >
+        <button onClick={()=>setVista("listos")} style={{
+          flex:1,padding:12,borderRadius:14,border:"none",fontWeight:"bold",
+          background:vista==="listos"
+          ? "linear-gradient(90deg,#22c55e,#16a34a)"
+          : "#1a1a1a",color:"white"
+        }}>
           ✅ Listos ({pedidosListos.length})
         </button>
       </div>
