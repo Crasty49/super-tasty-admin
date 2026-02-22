@@ -165,8 +165,42 @@ function Pedidos() {
         Tel: {p.telefono}
       </div>
 
-      <div style={{marginTop:5}}>
-        {p.pago === "efectivo" ? "💵" : "💳"} Pago: {p.pago}
+      <div style={{marginTop:6}}>
+
+        {/* EFECTIVO */}
+        {p.pago === "efectivo" && (
+          <div style={{
+            background:"rgba(34,197,94,0.12)",
+            padding:"8px 10px",
+            borderRadius:10,
+            fontSize:13,
+            marginTop:4,
+            border:"1px solid rgba(34,197,94,0.3)"
+          }}>
+            💵 Paga con: <b>${Number(p.efectivo || 0)}</b>
+
+            {Number(p.cambio) > 0 && (
+              <span style={{marginLeft:10}}>
+                🪙 Cambio: <b>${Number(p.cambio)}</b>
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* TRANSFERENCIA */}
+        {p.pago === "transferencia" && (
+          <div style={{
+            background:"rgba(59,130,246,0.15)",
+            padding:"8px 10px",
+            borderRadius:10,
+            fontSize:13,
+            marginTop:4,
+            border:"1px solid rgba(59,130,246,0.4)"
+          }}>
+            💳 Transferencia
+          </div>
+        )}
+
       </div>
 
       <div style={{
