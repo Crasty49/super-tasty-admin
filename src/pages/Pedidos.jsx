@@ -9,9 +9,7 @@ import {
   doc,
   updateDoc,
   getDoc,
-  setDoc,
-  where,
-  Timestamp
+  setDoc
 } from "firebase/firestore";
 
 import ding from "../assets/ding.mp3";
@@ -22,9 +20,7 @@ function Pedidos() {
   const [pedidosListos, setPedidosListos] = useState([]);
   const [vista, setVista] = useState("activos");
 
-  // 🔥 reloj en vivo
   const [now, setNow] = useState(Date.now());
-
   const audioRef = useRef(null);
   const pedidosPreviosRef = useRef(0);
 
@@ -41,7 +37,6 @@ function Pedidos() {
     escucharForeground();
   },[]);
 
-  // ⏱ actualizar tiempo cada 30 seg
   useEffect(()=>{
     const interval = setInterval(()=>{
       setNow(Date.now());
@@ -49,19 +44,11 @@ function Pedidos() {
     return ()=>clearInterval(interval);
   },[]);
 
-  // 🔥 SOLO pedidos del día actual
+  // 🔥 CONSULTA ESTABLE (NO DESAPARECEN)
   useEffect(() => {
-
-    const hoy = new Date();
-    hoy.setHours(0,0,0,0);
-
-    const manana = new Date(hoy);
-    manana.setDate(manana.getDate()+1);
 
     const q = query(
       collection(db, "pedidos"),
-      where("fecha", ">=", Timestamp.fromDate(hoy)),
-      where("fecha", "<", Timestamp.fromDate(manana)),
       orderBy("fecha","desc")
     );
 
@@ -70,39 +57,53 @@ function Pedidos() {
       const activos = [];
       const listos = [];
 
+      const hoy = new Date().toDateString();
+      let nuevosDetectados = false;
+
       snapshot.forEach((docu) => {
         const data = docu.data();
+        if (!data.fecha) return;
+
+        const fechaPedido = data.fecha.toDate().toDateString();
+
+        // SOLO PEDIDOS DEL DÍA ACTUAL
+        if (fechaPedido !== hoy) return;
 
         if (data.estado === "nuevo") activos.push({ id: docu.id, ...data });
         if (data.estado === "listo") listos.push({ id: docu.id, ...data });
       });
 
+      // 🔔 detectar nuevo pedido real
       if (
         activos.length > pedidosPreviosRef.current &&
         pedidosPreviosRef.current !== 0
       ) {
-        audioRef.current?.play().catch(()=>{});
+        nuevosDetectados = true;
       }
 
-      if (Notification.permission === "granted") {
-        new Notification("🔥 Nuevo pedido", {
-          body: "Revisa el panel admin",
-          icon: "/icon-192.png",
-          vibrate: [200,100,200]
-        });
+      if (nuevosDetectados) {
+        audioRef.current?.play().catch(()=>{});
+
+        if (Notification.permission === "granted") {
+          new Notification("🔥 Nuevo pedido", {
+            body: "Revisa el panel admin",
+            icon: "/icon-192.png",
+            vibrate: [200,100,200]
+          });
+        }
       }
 
       pedidosPreviosRef.current = activos.length;
 
       setPedidos(activos);
       setPedidosListos(listos);
+
     });
 
     return () => unsub();
 
   }, []);
 
-  // ⏱ calcular tiempo
   const tiempoTranscurrido = (fechaFirestore) => {
     if (!fechaFirestore) return "";
 
@@ -122,7 +123,6 @@ function Pedidos() {
   const marcarListo = async (pedido) => {
 
     const refPedido = doc(db, "pedidos", pedido.id);
-
     await updateDoc(refPedido, { estado: "listo" });
 
     const hoy = new Date();
@@ -148,33 +148,23 @@ function Pedidos() {
     });
 
     data.total_dia = (data.total_dia || 0) + pedido.total;
-
     await setDoc(refVenta, data);
   };
 
-  // 🎨 CARD
   const PedidoCard = (p, listo=false) => (
-    <div key={p.id}
-      style={{
-        background:"rgba(255,255,255,0.04)",
-        backdropFilter:"blur(18px)",
-        border:"1px solid rgba(255,255,255,0.08)",
-        padding:18,
-        borderRadius:18,
-        marginTop:16,
-        boxShadow:"0 10px 30px rgba(0,0,0,0.5)"
-      }}
-    >
+    <div key={p.id} style={{
+      background:"rgba(255,255,255,0.04)",
+      backdropFilter:"blur(18px)",
+      border:"1px solid rgba(255,255,255,0.08)",
+      padding:18,
+      borderRadius:18,
+      marginTop:16,
+      boxShadow:"0 10px 30px rgba(0,0,0,0.5)"
+    }}>
 
-      {/* CLIENTE + TIEMPO */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <h3 style={{marginBottom:5}}>{p.cliente}</h3>
-
-        <div style={{
-          fontSize:12,
-          opacity:0.6,
-          fontWeight:"bold"
-        }}>
+        <div style={{fontSize:12,opacity:0.6,fontWeight:"bold"}}>
           ⏱ {tiempoTranscurrido(p.fecha)}
         </div>
       </div>
@@ -184,8 +174,6 @@ function Pedidos() {
       </div>
 
       <div style={{marginTop:6}}>
-
-        {/* EFECTIVO */}
         {p.pago === "efectivo" && (
           <div style={{
             background:"rgba(34,197,94,0.12)",
@@ -196,7 +184,6 @@ function Pedidos() {
             border:"1px solid rgba(34,197,94,0.3)"
           }}>
             💵 Paga con: <b>${Number(p.efectivo || 0)}</b>
-
             {Number(p.cambio) > 0 && (
               <span style={{marginLeft:10}}>
                 🪙 Cambio: <b>${Number(p.cambio)}</b>
@@ -205,7 +192,6 @@ function Pedidos() {
           </div>
         )}
 
-        {/* TRANSFERENCIA */}
         {p.pago === "transferencia" && (
           <div style={{
             background:"rgba(59,130,246,0.15)",
@@ -218,15 +204,9 @@ function Pedidos() {
             💳 Transferencia
           </div>
         )}
-
       </div>
 
-      <div style={{
-        marginTop:5,
-        fontWeight:"bold",
-        fontSize:18,
-        color:"#22c55e"
-      }}>
+      <div style={{marginTop:5,fontWeight:"bold",fontSize:18,color:"#22c55e"}}>
         ${p.total}
       </div>
 
